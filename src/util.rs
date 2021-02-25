@@ -25,21 +25,21 @@ impl OsType {
         match self {
             OsType::WindowsX64 => true,
             OsType::WindowsX32 => true,
-            _ => false
+            _ => false,
         }
     }
 
     pub fn is_linux(&self) -> bool {
         match self {
             OsType::LinuxX64 => true,
-            _ => false
+            _ => false,
         }
     }
 
     pub fn is_mac_os(&self) -> bool {
         match self {
             OsType::MacOSX64 => true,
-            _ => false
+            _ => false,
         }
     }
 
@@ -48,7 +48,7 @@ impl OsType {
             OsType::LinuxX64 => 64,
             OsType::MacOSX64 => 64,
             OsType::WindowsX64 => 64,
-            OsType::WindowsX32 => 32
+            OsType::WindowsX32 => 32,
         }
     }
 
@@ -57,16 +57,16 @@ impl OsType {
             OsType::LinuxX64 => "linux",
             OsType::MacOSX64 => "macos",
             OsType::WindowsX64 => "windows",
-            OsType::WindowsX32 => "windows"
+            OsType::WindowsX32 => "windows",
         }
     }
 }
 
 pub fn get_os_type() -> OsType {
     #[cfg(all(target_os = "macos", target_arch = "x86_64"))]
-        let os_type = OsType::MacOSX64;
+    let os_type = OsType::MacOSX64;
     #[cfg(all(target_os = "linux"))]
-        let os_type = {
+    let os_type = {
         let info = uname::uname().expect("Can't get os info");
 
         match info.machine.as_ref() {
@@ -75,7 +75,7 @@ pub fn get_os_type() -> OsType {
         }
     };
     #[cfg(all(target_os = "windows"))]
-        let os_type = {
+    let os_type = {
         use std::mem;
         use winapi::um::sysinfoapi::{GetNativeSystemInfo, SYSTEM_INFO_u_s, SYSTEM_INFO};
         use winapi::um::winnt::{PROCESSOR_ARCHITECTURE_AMD64, PROCESSOR_ARCHITECTURE_INTEL};

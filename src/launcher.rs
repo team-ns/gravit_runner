@@ -1,9 +1,8 @@
-use anyhow::{Result, Context};
+use anyhow::{Context, Result};
 use std::path::Path;
 use std::process::Command;
-use dirs::data_dir;
-use crate::util::launcher_dir;
-use std::{fs, io};
+
+use std::fs;
 use std::io::Write;
 
 #[cfg(windows)]
@@ -18,9 +17,15 @@ pub struct Launcher {
 
 impl Launcher {
     pub fn run_launcher<P: AsRef<Path>>(&self, launcher_path: P, jre_path: P) -> Result<()> {
-        let mut jre_path = jre_path.as_ref().join("bin").join(JAVA_FILE);
+        let jre_path = jre_path.as_ref().join("bin").join(JAVA_FILE);
         Command::new(&jre_path)
-            .args(&["-jar", launcher_path.as_ref().to_str().context("Can't convert path to string")?])
+            .args(&[
+                "-jar",
+                launcher_path
+                    .as_ref()
+                    .to_str()
+                    .context("Can't convert path to string")?,
+            ])
             .output()?;
         Ok(())
     }
@@ -34,7 +39,7 @@ impl Launcher {
             .create(true)
             .write(true)
             .open(launcher_path.as_ref())?;
-        file.write(&response);
+        file.write(&response)?;
         Ok(())
     }
 }

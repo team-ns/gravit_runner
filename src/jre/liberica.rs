@@ -1,11 +1,11 @@
+use crate::config::Config;
 use crate::jre::Jre;
-use std::path::{Path, PathBuf};
 use crate::util::OsType;
 use anyhow::Result;
+use sha1::{Digest, Sha1};
 use std::fs;
-use sha1::{Sha1, Digest};
 use std::io::Write;
-use crate::config::Config;
+use std::path::{Path, PathBuf};
 use zip::result::ZipError;
 
 pub struct LibericaJre {
@@ -21,7 +21,6 @@ impl LibericaJre {
         }
     }
 }
-
 
 impl Jre for LibericaJre {
     fn check_jre_archive<P: AsRef<Path>>(&self, path: P) -> Result<()> {
@@ -42,12 +41,10 @@ impl Jre for LibericaJre {
         let file = fs::File::open(zip)?;
         let mut archive = zip::ZipArchive::new(file)?;
         for i in 0..archive.len() {
-            let mut file = archive.by_index(i)?;
+            let file = archive.by_index(i)?;
             if file.is_file() {
                 if let Some(path) = file.enclosed_name() {
-                    let path = path.iter()
-                        .skip(1)
-                        .collect::<PathBuf>();
+                    let path = path.iter().skip(1).collect::<PathBuf>();
 
                     let mut hasher = crc32fast::Hasher::new();
                     hasher.update(&fs::read(folder.as_ref().join(&path))?);
@@ -63,12 +60,11 @@ impl Jre for LibericaJre {
 
     fn extract_jre<P: AsRef<Path>>(&self, folder: P, zip: P) -> Result<()> {
         if !folder.as_ref().exists() {
-            fs::create_dir_all(&folder);
+            fs::create_dir_all(&folder)?;
         }
         let file = fs::File::open(&zip)?;
         let mut archive = zip::ZipArchive::new(file)?;
 
-        use std::fs;
         use std::io;
 
         for i in 0..archive.len() {
@@ -77,10 +73,7 @@ impl Jre for LibericaJre {
                 .enclosed_name()
                 .ok_or(ZipError::InvalidArchive("Invalid file path"))?;
 
-            let filepath = filepath
-                .iter()
-                .skip(1)
-                .collect::<PathBuf>();
+            let filepath = filepath.iter().skip(1).collect::<PathBuf>();
 
             let outpath = folder.as_ref().join(filepath);
 
@@ -97,17 +90,16 @@ impl Jre for LibericaJre {
             }
             // Get and Set permissions
             #[cfg(unix)]
-                {
-                    use std::os::unix::fs::PermissionsExt;
-                    if let Some(mode) = file.unix_mode() {
-                        fs::set_permissions(&outpath, fs::Permissions::from_mode(mode))?;
-                    }
+            {
+                use std::os::unix::fs::PermissionsExt;
+                if let Some(mode) = file.unix_mode() {
+                    fs::set_permissions(&outpath, fs::Permissions::from_mode(mode))?;
                 }
+            }
         }
         fs::remove_file(zip.as_ref())?;
         Ok(())
     }
-
 
     fn download_jre<P: AsRef<Path>>(&self, path: P) -> Result<()> {
         let os_type = &self.os_type;
@@ -117,11 +109,8 @@ impl Jre for LibericaJre {
         if let Some(parent) = path.as_ref().parent() {
             fs::create_dir_all(parent)?;
         }
-        let mut file = fs::OpenOptions::new()
-            .create(true)
-            .write(true)
-            .open(path)?;
-        file.write(&response);
+        let mut file = fs::OpenOptions::new().create(true).write(true).open(path)?;
+        file.write(&response)?;
         Ok(())
     }
 }

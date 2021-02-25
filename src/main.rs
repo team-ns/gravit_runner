@@ -1,15 +1,15 @@
-use crate::util::{OsType, launcher_dir};
 use crate::jre::Jre;
-use std::path::{Path, PathBuf};
 use crate::launcher::Launcher;
-use anyhow::Error;
-use std::fs;
-use crate::config::Config;
+use crate::util::launcher_dir;
+use std::path::Path;
 
-mod util;
+use crate::config::Config;
+use std::fs;
+
+mod config;
 mod jre;
 mod launcher;
-mod config;
+mod util;
 
 enum Stage {
     Launcher,
@@ -18,7 +18,6 @@ enum Stage {
     CheckExtract,
 }
 
-
 pub fn main() {
     let config = Config::default();
     let project_name = &config.project_name;
@@ -26,11 +25,10 @@ pub fn main() {
     let launcher_url = &config.launcher_url;
     let project_path = launcher_dir(project_name).expect("Can't get launcher path");
     let launcher = Launcher {
-        url: launcher_url.to_string()
+        url: launcher_url.to_string(),
     };
     let launcher_path = project_path.join("Launcher.jar");
-    let jre = crate::jre
-    ::liberica::LibericaJre::new(util::get_os_type(), &config);
+    let jre = crate::jre::liberica::LibericaJre::new(util::get_os_type(), &config);
     let zip_path = project_path.join("launcher-jre.zip");
     let folder_path = if check_installed {
         if let Some(installed_jre) = jre::find_installed_jre() {
@@ -51,10 +49,14 @@ pub fn main() {
             Stage::Launcher => {
                 if !launcher_path.is_file() {
                     println!("Download Launcher");
-                    launcher.download_launcher(&launcher_path).expect("Can't download launcher");
+                    launcher
+                        .download_launcher(&launcher_path)
+                        .expect("Can't download launcher");
                 }
                 println!("Run Launcher");
-                launcher.run_launcher(&launcher_path, &folder_path).expect("Can't run launcher");
+                launcher
+                    .run_launcher(&launcher_path, &folder_path)
+                    .expect("Can't run launcher");
                 break;
             }
             Stage::DownloadJre => {
@@ -66,20 +68,21 @@ pub fn main() {
                 println!("Check Download Archive");
                 match jre.check_jre_archive(&zip_path) {
                     Err(_) => {
-                        fs::remove_file(&zip_path);
+                        fs::remove_file(&zip_path).expect("Can't delete file");
                         continue;
                     }
                     _ => {}
                 };
                 println!("Extract JRE");
-                jre.extract_jre(&folder_path, &zip_path).expect("Can't extract jre");
+                jre.extract_jre(&folder_path, &zip_path)
+                    .expect("Can't extract jre");
                 continue;
             }
             Stage::CheckExtract => {
                 println!("Check Extracted JRE");
                 match jre.check_jre_folder(&folder_path, &zip_path) {
                     Err(_) => {
-                        fs::remove_dir_all(&folder_path);
+                        fs::remove_dir_all(&folder_path).expect("Can't delete file");
                         continue;
                     }
                     _ => {}
@@ -88,7 +91,6 @@ pub fn main() {
         }
     }
 }
-
 
 fn get_stage<P: AsRef<Path>>(zip_path: P, folder_path: P) -> Stage {
     if !zip_path.as_ref().exists() {

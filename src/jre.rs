@@ -1,9 +1,8 @@
 pub(crate) mod liberica;
 
-use std::path::{PathBuf, Path};
-use std::process::Command;
 use anyhow::Result;
-use crate::util::OsType;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 
 pub trait Jre {
     fn check_jre_archive<P: AsRef<Path>>(&self, path: P) -> Result<()>;
@@ -13,7 +12,6 @@ pub trait Jre {
     fn extract_jre<P: AsRef<Path>>(&self, folder: P, zip: P) -> Result<()>;
 
     fn download_jre<P: AsRef<Path>>(&self, path: P) -> Result<()>;
-
 }
 
 pub fn find_installed_jre() -> Option<PathBuf> {
@@ -28,8 +26,10 @@ pub fn find_installed_jre() -> Option<PathBuf> {
             for line in stdout.lines().chain(stderr.lines()) {
                 if line.contains("java.home") {
                     let pos = match line.find('=') {
-                        None => { continue; }
-                        Some(pos) => { pos + 1 }
+                        None => {
+                            continue;
+                        }
+                        Some(pos) => pos + 1,
                     };
                     let path = line[pos..].trim();
                     let jre_path = PathBuf::from(path);
