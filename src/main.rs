@@ -26,6 +26,7 @@ pub fn main() {
     let project_path = launcher_dir(project_name).expect("Can't get launcher path");
     let launcher = Launcher {
         url: launcher_url.to_string(),
+        user_agent: config.user_agent.clone(),
     };
     let launcher_path = project_path.join("Launcher.jar");
     let jre = crate::jre::liberica::LibericaJre::new(util::get_os_type(), &config);
@@ -57,7 +58,7 @@ pub fn main() {
                 launcher
                     .run_launcher(&launcher_path, &folder_path)
                     .expect("Can't run launcher");
-                break;
+                std::process::exit(0);
             }
             Stage::DownloadJre => {
                 println!("Download JRE");
@@ -89,6 +90,9 @@ pub fn main() {
                 };
             }
         }
+    }
+    loop {
+
     }
 }
 

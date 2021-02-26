@@ -13,6 +13,7 @@ static JAVA_FILE: &'static str = "java";
 
 pub struct Launcher {
     pub(crate) url: String,
+    pub(crate) user_agent: Option<String>,
 }
 
 impl Launcher {
@@ -39,7 +40,11 @@ impl Launcher {
     }
 
     pub fn download_launcher<P: AsRef<Path>>(&self, launcher_path: P) -> Result<()> {
-        let response = minreq::get(&self.url).send()?.as_bytes().to_vec();
+        let mut request = minreq::get(&self.url);
+        if let Some(agent) = &self.user_agent {
+            request = request.with_header("User-Agent", agent);
+        }
+        let response = request.send()?.as_bytes().to_vec();
         if let Some(parent) = launcher_path.as_ref().parent() {
             fs::create_dir_all(parent)?;
         }

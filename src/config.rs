@@ -6,6 +6,7 @@ pub struct Config {
     pub(crate) jre_version: String,
     pub(crate) launcher_url: String,
     pub(crate) check_jre: bool,
+    pub(crate) user_agent: Option<String>
 }
 
 impl Default for Config {
