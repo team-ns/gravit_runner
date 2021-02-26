@@ -8,7 +8,6 @@ build = "build.rs"
 
 [dependencies]
 crc32fast = "1.2"
-zip = "0.5"
 walkdir = "2.3"
 dirs = "3.0"
 anyhow = "1.0"
@@ -18,12 +17,14 @@ minreq = { version = "2.3", features = ["https-native"] }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 
-[target.'cfg(windows)'.dependencies.winapi]
-version = "0.3"
-features = ["winnt"]
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = ["winnt"] }
+zip = "0.5"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 uname = "0.1"
+flate2 = "1.0"
+tar = "0.4"
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "0.1"

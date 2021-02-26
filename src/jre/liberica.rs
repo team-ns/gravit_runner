@@ -6,7 +6,6 @@ use sha1::{Digest, Sha1};
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use zip::result::ZipError;
 
 pub struct LibericaJre {
     os_type: OsType,
@@ -37,6 +36,7 @@ impl Jre for LibericaJre {
         }
     }
 
+    #[cfg(not(target_os = "linux"))]
     fn check_jre_folder<P: AsRef<Path>>(&self, folder: P, zip: P) -> Result<()> {
         let file = fs::File::open(zip)?;
         let mut archive = zip::ZipArchive::new(file)?;
@@ -58,7 +58,30 @@ impl Jre for LibericaJre {
         Ok(())
     }
 
+    #[cfg(target_os = "linux")]
+    fn check_jre_folder<P: AsRef<Path>>(&self, folder: P, zip: P) -> Result<()> {
+        use flate2::read::GzDecoder;
+        use tar::Archive;
+
+        let file = fs::File::open(zip)?;
+        let tar = GzDecoder::new(file);
+        let mut archive = Archive::new(tar);
+        for entry in archive.entries()?.filter_map(|e| e.ok()) {
+            let path = entry.path()?.iter().skip(1).collect::<PathBuf>();
+            let mut hasher = crc32fast::Hasher::new();
+            hasher.update(&fs::read(folder.as_ref().join(&path))?);
+            let crc = hasher.finalize();
+            if crc != entry.header().cksum()? {
+                return Err(anyhow::anyhow!("File {:?} has invalid hash", &path));
+            }
+        }
+        Ok(())
+    }
+
+    #[cfg(not(target_os = "linux"))]
     fn extract_jre<P: AsRef<Path>>(&self, folder: P, zip: P) -> Result<()> {
+        use zip::result::ZipError;
+
         if !folder.as_ref().exists() {
             fs::create_dir_all(&folder)?;
         }
@@ -88,14 +111,25 @@ impl Jre for LibericaJre {
                 let mut outfile = fs::File::create(&outpath)?;
                 io::copy(&mut file, &mut outfile)?;
             }
-            // Get and Set permissions
-            #[cfg(unix)]
-            {
-                use std::os::unix::fs::PermissionsExt;
-                if let Some(mode) = file.unix_mode() {
-                    fs::set_permissions(&outpath, fs::Permissions::from_mode(mode))?;
-                }
-            }
+        }
+        fs::remove_file(zip.as_ref())?;
+        Ok(())
+    }
+
+    #[cfg(target_os = "linux")]
+    fn extract_jre<P: AsRef<Path>>(&self, folder: P, zip: P) -> Result<()> {
+        use flate2::read::GzDecoder;
+        use tar::Archive;
+
+        if !folder.as_ref().exists() {
+            fs::create_dir_all(&folder)?;
+        }
+        let file = fs::File::open(&zip)?;
+        let tar = GzDecoder::new(file);
+        let mut archive = Archive::new(tar);
+        for mut entry in archive.entries()?.filter_map(|e| e.ok()) {
+            let path = entry.path()?.iter().skip(1).collect::<PathBuf>();
+            entry.unpack(path)?;
         }
         fs::remove_file(zip.as_ref())?;
         Ok(())
