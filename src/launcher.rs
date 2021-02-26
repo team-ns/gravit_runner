@@ -18,15 +18,23 @@ pub struct Launcher {
 impl Launcher {
     pub fn run_launcher<P: AsRef<Path>>(&self, launcher_path: P, jre_path: P) -> Result<()> {
         let jre_path = jre_path.as_ref().join("bin").join(JAVA_FILE);
-        Command::new(&jre_path)
-            .args(&[
-                "-jar",
-                launcher_path
-                    .as_ref()
-                    .to_str()
-                    .context("Can't convert path to string")?,
-            ])
-            .output()?;
+        let mut command = Command::new(&jre_path);
+
+        command.args(&[
+            "-jar",
+            launcher_path
+                .as_ref()
+                .to_str()
+                .context("Can't convert path to string")?,
+        ]);
+
+        if cfg!(windows) {
+            use std::os::windows::process::CommandExt;
+            const DETACHED_PROCESS: u32 = 0x00000008;
+
+            command.creation_flags(DETACHED_PROCESS);
+        }
+        command.spawn()?;
         Ok(())
     }
 
