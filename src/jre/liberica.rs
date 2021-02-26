@@ -129,7 +129,7 @@ impl Jre for LibericaJre {
         let mut archive = Archive::new(tar);
         for mut entry in archive.entries()?.filter_map(|e| e.ok()) {
             let path = entry.path()?.iter().skip(1).collect::<PathBuf>();
-            entry.unpack(path)?;
+            entry.unpack(folder.as_ref().join(path))?;
         }
         fs::remove_file(zip.as_ref())?;
         Ok(())
