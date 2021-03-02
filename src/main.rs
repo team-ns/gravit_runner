@@ -1,6 +1,7 @@
 use crate::jre::Jre;
 use crate::launcher::Launcher;
 use crate::util::launcher_dir;
+use anyhow::{Context, Result};
 use std::path::Path;
 
 use crate::config::Config;
@@ -19,11 +20,21 @@ enum Stage {
 }
 
 pub fn main() {
+    match run() {
+        Err(e) => {
+            println!("{}", e)
+        }
+        _ => {}
+    }
+    loop {}
+}
+
+fn run() -> Result<()> {
     let config = Config::default();
     let project_name = &config.project_name;
     let check_installed = config.check_jre;
     let launcher_url = &config.launcher_url;
-    let project_path = launcher_dir(project_name).expect("Can't get launcher path");
+    let project_path = launcher_dir(project_name).context("Can't get launcher path")?;
     let launcher = Launcher {
         url: launcher_url.to_string(),
         user_agent: config.user_agent.clone(),
@@ -52,47 +63,44 @@ pub fn main() {
                     println!("Download Launcher");
                     launcher
                         .download_launcher(&launcher_path)
-                        .expect("Can't download launcher");
+                        .context("Can't download launcher")?;
                 }
                 println!("Run Launcher");
                 launcher
                     .run_launcher(&launcher_path, &folder_path)
-                    .expect("Can't run launcher");
+                    .context("Can't run launcher")?;
                 std::process::exit(0);
             }
             Stage::DownloadJre => {
                 println!("Download JRE");
-                jre.download_jre(&zip_path).expect("Can't download jre");
+                jre.download_jre(&zip_path).context("Can't download jre")?;
                 continue;
             }
             Stage::CheckDownload => {
                 println!("Check Download Archive");
                 match jre.check_jre_archive(&zip_path) {
                     Err(_) => {
-                        fs::remove_file(&zip_path).expect("Can't delete file");
+                        fs::remove_file(&zip_path).context("Can't delete file")?;
                         continue;
                     }
                     _ => {}
                 };
                 println!("Extract JRE");
                 jre.extract_jre(&folder_path, &zip_path)
-                    .expect("Can't extract jre");
+                    .context("Can't extract jre")?;
                 continue;
             }
             Stage::CheckExtract => {
                 println!("Check Extracted JRE");
                 match jre.check_jre_folder(&folder_path, &zip_path) {
                     Err(_) => {
-                        fs::remove_dir_all(&folder_path).expect("Can't delete file");
+                        fs::remove_dir_all(&folder_path).context("Can't delete file")?;
                         continue;
                     }
                     _ => {}
                 };
             }
         }
-    }
-    loop {
-
     }
 }
 
