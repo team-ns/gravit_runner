@@ -64,6 +64,13 @@ fn run() -> Result<()> {
                     launcher
                         .download_launcher(&launcher_path)
                         .context("Can't download launcher")?;
+
+                } else {
+                    println!("Verify Launcher");
+                    if let Err(_) = launcher.check_launcher(&launcher_path) {
+                        fs::remove_file(&launcher_path).context("Can't remove invalid launcher")?;
+                        continue;
+                    }
                 }
                 println!("Run Launcher");
                 launcher

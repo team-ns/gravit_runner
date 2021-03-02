@@ -17,6 +17,25 @@ pub struct Launcher {
 }
 
 impl Launcher {
+    pub fn check_launcher<P: AsRef<Path>>(&self, launcher_path: P) -> Result<()> {
+        let file_len = fs::metadata(launcher_path.as_ref())?.len();
+        let mut request = minreq::get(&self.url);
+        if let Some(agent) = &self.user_agent {
+            request = request.with_header("User-Agent", agent);
+        }
+        let real_len: u64 = request
+            .send()?
+            .headers
+            .get("Content-Length")
+            .context("Can't get launcher size")?
+            .parse()?;
+
+        if real_len != file_len {
+            Err(anyhow::anyhow!("Invalid launcher size"))
+        } else {
+            Ok(())
+        }
+    }
     pub fn run_launcher<P: AsRef<Path>>(&self, launcher_path: P, jre_path: P) -> Result<()> {
         let jre_path = jre_path.as_ref().join("bin").join(JAVA_FILE);
         let mut command = Command::new(&jre_path);
