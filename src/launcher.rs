@@ -48,7 +48,8 @@ impl Launcher {
                 .context("Can't convert path to string")?,
         ]);
 
-        if cfg!(windows) {
+        #[cfg(target_os = "windows")]
+        {
             use std::os::windows::process::CommandExt;
             const DETACHED_PROCESS: u32 = 0x00000008;
 
