@@ -1,4 +1,4 @@
-use crate::config::Config;
+use crate::config::ProjectConfig;
 use crate::jre::Jre;
 use crate::util::OsType;
 use anyhow::Result;
@@ -13,7 +13,7 @@ pub struct LibericaJre {
 }
 
 impl LibericaJre {
-    pub fn new(os_type: OsType, config: &Config) -> Self {
+    pub fn new(os_type: OsType, config: &ProjectConfig) -> Self {
         LibericaJre {
             os_type,
             jre_version: config.jre_version.clone(),

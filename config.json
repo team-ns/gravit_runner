@@ -1,6 +1,14 @@
 {
-  "project_name": "",
-  "jre_version": "8u232+10",
-  "launcher_url": "",
-  "check_jre": false
+  "project": {
+    "project_name": "",
+    "jre_version": "8u232+10",
+    "launcher_url": "",
+    "check_jre": false
+  },
+  "window": {
+    "window_title": "GravitLauncher Loader",
+    "progress_bar_background": "db149f",
+    "progress_bar_color": "14db71",
+    "text_color": "db149f"
+  }
 }
